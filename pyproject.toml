@@ -1,0 +1,179 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ocr-enhanced"
+version = "2.0.0"
+description = "Enhanced OCR application with local and cloud processing capabilities"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "OCR Enhanced Team", email = "contact@example.com"}
+]
+maintainers = [
+    {name = "OCR Enhanced Team", email = "contact@example.com"}
+]
+keywords = ["ocr", "tesseract", "mistral", "pdf", "document-processing"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: End Users/Desktop",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Multimedia :: Graphics :: Capture :: Scanners",
+    "Topic :: Office/Business",
+    "Topic :: Scientific/Engineering :: Image Recognition",
+]
+requires-python = ">=3.8"
+dependencies = [
+    "pytesseract>=3.10.0",
+    "pdf2image>=3.1.0", 
+    "Pillow>=10.0.0",
+    "PyMuPDF>=1.23.0",
+    "PyPDF2>=3.0.0",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "coloredlogs>=15.0.1",
+    "typing-extensions>=4.7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+    "pytest-mock>=3.11.0",
+    "black>=23.7.0",
+    "flake8>=6.0.0", 
+    "mypy>=1.5.0",
+    "isort>=5.12.0",
+    "bandit>=1.7.5",
+    "pre-commit>=3.3.0",
+]
+docs = [
+    "sphinx>=7.1.0",
+    "sphinx-rtd-theme>=1.3.0",
+    "sphinx-autodoc-typehints>=1.24.0",
+]
+build = [
+    "build>=0.10.0",
+    "twine>=4.0.0",
+    "wheel>=0.41.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/leo-dower/ocr-enhanced-projec"
+Repository = "https://github.com/leo-dower/ocr-enhanced-projec.git"
+Documentation = "https://github.com/leo-dower/ocr-enhanced-projec#readme"
+"Bug Tracker" = "https://github.com/leo-dower/ocr-enhanced-projec/issues"
+
+[project.scripts]
+ocr-enhanced = "src.core.main:main"
+ocr-cli = "src.core.cli:main"
+
+[project.gui-scripts]
+ocr-enhanced-gui = "src.gui.main_window:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["src*"]
+
+[tool.setuptools.package-data]
+"src" = ["*.md", "*.txt", "*.json"]
+
+# Black configuration
+[tool.black]
+line-length = 88
+target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+include = '\.pyi?$'
+extend-exclude = '''
+/(
+  # directories
+  \.eggs
+  | \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | build
+  | dist
+)/
+'''
+
+# isort configuration
+[tool.isort]
+profile = "black"
+multi_line_output = 3
+line_length = 88
+known_first_party = ["src"]
+
+# mypy configuration
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+warn_unreachable = true
+strict_equality = true
+
+[[tool.mypy.overrides]]
+module = [
+    "pytesseract.*",
+    "pdf2image.*",
+    "fitz.*",
+    "PyPDF2.*",
+]
+ignore_missing_imports = true
+
+# pytest configuration
+[tool.pytest.ini_options]
+minversion = "7.0"
+addopts = "-ra -q --strict-markers --strict-config"
+testpaths = ["tests"]
+python_files = ["test_*.py", "*_test.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+markers = [
+    "slow: marks tests as slow (deselect with '-m \"not slow\"')",
+    "integration: marks tests as integration tests",
+    "unit: marks tests as unit tests",
+]
+
+# Coverage configuration
+[tool.coverage.run]
+source = ["src"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "@abstract",
+]
+
+# Bandit security linting
+[tool.bandit]
+exclude_dirs = ["tests", "scripts"]
+skips = ["B101"]  # Skip assert_used test
+
+# Flake8 configuration (in setup.cfg since flake8 doesn't support pyproject.toml yet)

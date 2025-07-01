@@ -1,0 +1,30 @@
+# Core dependencies for OCR Enhanced Application
+# Production requirements
+
+# GUI Framework
+tkinter-dnd2>=0.3.0        # Enhanced drag-and-drop for tkinter
+
+# OCR Processing  
+pytesseract>=3.10.0        # Tesseract OCR Python wrapper
+pdf2image>=3.1.0           # PDF to image conversion
+Pillow>=10.0.0             # Image processing library
+
+# PDF Manipulation
+PyMuPDF>=1.23.0            # PDF reading and searchable PDF generation  
+PyPDF2>=3.0.0              # PDF utilities and splitting
+
+# HTTP Client
+requests>=2.31.0           # HTTP library for API calls
+urllib3>=2.0.0             # HTTP client
+
+# File Handling
+pathlib2>=2.3.7           # Enhanced path handling (backport)
+
+# Configuration
+python-dotenv>=1.0.0       # Environment variable loading
+
+# Logging
+coloredlogs>=15.0.1        # Enhanced console logging
+
+# Data Processing
+typing-extensions>=4.7.0   # Type hints backport
