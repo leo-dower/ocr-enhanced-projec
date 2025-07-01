@@ -44,8 +44,9 @@ class OCRBatchAppEnhancedSearchable:
         self.root.resizable(True, True)
 
         # Configurações
-        self.pasta_padrao = r"F:\OneDrive\Advocacia\ano_2025"
-        self.pasta_destino = r"F:\OneDrive\Advocacia\ano_2025"
+        # Default folders - can be customized by end users
+        self.pasta_padrao = os.path.expanduser("~/Documents/OCR_Input")
+        self.pasta_destino = os.path.expanduser("~/Documents/OCR_Output")
         self.max_paginas_por_lote = 200
         self.arquivos_selecionados = []
         self.processamento_ativo = False

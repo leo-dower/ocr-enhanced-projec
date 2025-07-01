@@ -284,10 +284,10 @@ if [ $PYTHON_CHECK_RESULT -eq 0 ] && command_exists tesseract && command_exists 
     echo "🎉 SUCESSO TOTAL! Todas as dependências estão funcionando"
     echo ""
     echo "🚀 Para executar o OCR Hybrid:"
-    echo "   python3 /home/leu/OCR_Enhanced_Hybrid_v1.py"
+    echo "   python3 OCR_Enhanced_Hybrid_v1.py"
     echo ""
     echo "🧪 Para testar o sistema:"
-    echo "   python3 /home/leu/test_hybrid_setup.py"
+    echo "   python3 test_hybrid_setup.py"
 else
     echo "⚠ INSTALAÇÃO PARCIAL - Alguns componentes podem não funcionar"
     echo ""

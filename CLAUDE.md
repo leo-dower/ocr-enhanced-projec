@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This repository contains a Python OCR batch processing application using Mistral AI's OCR API. The main application is located in `/home/leu/scripts/` and provides a GUI for processing PDF documents through OCR.
+This repository contains a Python OCR batch processing application using Mistral AI's OCR API. The application provides a GUI for processing PDF documents through OCR with support for both local and cloud processing.
 
 ## Architecture
 
@@ -35,17 +35,28 @@ The application requires:
 
 ## Running the Application
 
+### Latest Version (Recommended)
 ```bash
-cd /home/leu/scripts/
+python OCR_Enhanced_Hybrid_v1.py
+```
+
+### Legacy Version
+```bash
 python "SCRIPT OCR - MISTRAL OCR  - requisicao direta http v6 grafico - atualizado - LOTES BATCH - v2 cm log aprimorado.PY"
 ```
 
 ## Configuration
 
-- Default source folder: `F:\OneDrive\Advocacia\ano_2025`
-- Default destination folder: `F:\OneDrive\Advocacia\ano_2025`
+### Folder Selection (NEW)
+- **Input Folder**: User-selectable via "Choose" button (where to find PDF files)
+- **Output Folder**: User-selectable via "Choose" button (where to save results)
+- **Default Folders**: Configurable fallback directories
+- **Auto-Creation**: Output folders created automatically if needed
+
+### Processing Settings
 - Max pages per batch: 200 (configurable)
 - Max retry attempts: 3 (configurable)
+- Processing modes: Hybrid, Cloud-only, Local-only, Privacy
 
 ## API Integration
 
@@ -165,3 +176,39 @@ pip install PyMuPDF reportlab
 - 📧 **Compartilhar** PDFs pesquisáveis
 - 🗂️ **Organizar** biblioteca digital de documentos
 - ✅ **Manter** aparência original do documento
+
+## Dynamic Folder Selection (Latest Feature)
+
+### Overview
+The latest version (`OCR_Enhanced_Hybrid_v1.py`) includes dynamic folder selection, allowing users to choose custom input and output directories through the GUI.
+
+### New Capabilities
+
+#### Input Folder Selection
+- **Purpose**: Choose where to look for PDF files
+- **Interface**: "Choose" button in Basic Settings section
+- **Features**: 
+  - Shows PDF count in selected folder
+  - Validates read permissions
+  - Updates all file dialogs to start from selected folder
+
+#### Output Folder Selection
+- **Purpose**: Choose where to save OCR results (JSON, MD, searchable PDF)
+- **Interface**: "Choose" button in Basic Settings section  
+- **Features**:
+  - Auto-creates folder if it doesn't exist
+  - Validates write permissions
+  - Shows available disk space
+  - Updates all save operations to use selected folder
+
+### User Experience Improvements
+- **Visual Feedback**: Color-coded labels (blue for input, green for output)
+- **Path Truncation**: Long paths displayed elegantly with "..." prefix
+- **Tooltips**: Helpful explanations for each button and field
+- **Validation**: Real-time permission and existence checks
+- **Logging**: Detailed feedback about folder changes and validation
+
+### Backward Compatibility
+- **Default Behavior**: Falls back to original hardcoded paths if no custom folders selected
+- **Configuration**: Default folders can still be modified in code for deployment
+- **Legacy Support**: All existing functionality preserved
