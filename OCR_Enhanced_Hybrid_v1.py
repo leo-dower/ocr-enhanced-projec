@@ -52,6 +52,11 @@ class OCRHybridApp:
         # Configurações
         self.pasta_padrao = r"F:\OneDrive\Advocacia\ano_2025"
         self.pasta_destino = r"F:\OneDrive\Advocacia\ano_2025"
+        
+        # Pastas selecionáveis pelo usuário
+        self.pasta_entrada_selecionada = self.pasta_padrao  # Pasta para iniciar diálogos
+        self.pasta_saida_selecionada = self.pasta_destino   # Pasta para salvar resultados
+        
         self.max_paginas_por_lote = 200
         self.arquivos_selecionados = []
         self.processamento_ativo = False
@@ -195,6 +200,38 @@ class OCRHybridApp:
                       variable=self.log_detalhado, font=("Arial", 9)).grid(
             row=2, column=0, columnspan=2, sticky="w", padx=5, pady=5)
 
+        # Seção de pastas
+        tk.Label(config_frame, text="Pasta de entrada:", font=("Arial", 9, "bold")).grid(
+            row=3, column=0, sticky="e", padx=5, pady=(10,5))
+        
+        self.pasta_entrada_label = tk.Label(config_frame, 
+                                           text=self.pasta_entrada_selecionada, 
+                                           font=("Arial", 8), fg="darkblue", 
+                                           relief="sunken", anchor="w", width=40)
+        self.pasta_entrada_label.grid(row=3, column=1, columnspan=2, sticky="ew", padx=5, pady=(10,5))
+        
+        self.btn_pasta_entrada = tk.Button(config_frame, text="Escolher", 
+                                          command=self.selecionar_pasta_entrada,
+                                          bg="lightcyan", font=("Arial", 8))
+        self.btn_pasta_entrada.grid(row=3, column=3, sticky="w", padx=5, pady=(10,5))
+        self.criar_tooltip(self.btn_pasta_entrada, "Selecione a pasta padrão para buscar arquivos PDF")
+
+        tk.Label(config_frame, text="Pasta de saída:", font=("Arial", 9, "bold")).grid(
+            row=4, column=0, sticky="e", padx=5, pady=5)
+        
+        self.pasta_saida_label = tk.Label(config_frame, 
+                                         text=self.pasta_saida_selecionada, 
+                                         font=("Arial", 8), fg="darkgreen", 
+                                         relief="sunken", anchor="w", width=40)
+        self.pasta_saida_label.grid(row=4, column=1, columnspan=2, sticky="ew", padx=5, pady=5)
+        self.criar_tooltip(self.pasta_saida_label, "Pasta onde serão salvos os resultados do OCR")
+        
+        self.btn_pasta_saida = tk.Button(config_frame, text="Escolher", 
+                                        command=self.selecionar_pasta_saida,
+                                        bg="lightgreen", font=("Arial", 8))
+        self.btn_pasta_saida.grid(row=4, column=3, sticky="w", padx=5, pady=5)
+        self.criar_tooltip(self.btn_pasta_saida, "Selecione onde salvar JSON, Markdown e PDFs pesquisáveis")
+
         # Seleção de arquivos
         arquivo_frame = tk.LabelFrame(parent, text="Seleção de Arquivos", font=("Arial", 10, "bold"))
         arquivo_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
@@ -239,19 +276,11 @@ class OCRHybridApp:
                                          fg="gray", font=("Arial", 9))
         self.status_lote_label.grid(row=3, column=0, columnspan=3, pady=5)
 
-        # Pasta de destino
-        tk.Label(parent, text="Destino:", font=("Arial", 10)).grid(
-            row=4, column=0, sticky="e", padx=10, pady=8)
-        destino_label = tk.Label(parent, text=self.pasta_destino, 
-                                font=("Arial", 9), fg="darkgreen", 
-                                relief="sunken", anchor="w")
-        destino_label.grid(row=4, column=1, columnspan=2, sticky="ew", padx=10, pady=8)
-
         # Barra de progresso
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(parent, variable=self.progress_var, 
                                            maximum=100, length=300)
-        self.progress_bar.grid(row=5, column=0, columnspan=3, pady=10, sticky="ew", padx=10)
+        self.progress_bar.grid(row=4, column=0, columnspan=3, pady=10, sticky="ew", padx=10)
 
         # Botão processar
         self.processar_button = tk.Button(parent, text="PROCESSAR HÍBRIDO", 
@@ -259,7 +288,7 @@ class OCRHybridApp:
                                          bg="green", fg="white", 
                                          font=("Arial", 12, "bold"),
                                          height=2)
-        self.processar_button.grid(row=6, column=0, columnspan=3, pady=15, padx=10)
+        self.processar_button.grid(row=5, column=0, columnspan=3, pady=15, padx=10)
 
         # Status
         self.status_label = tk.Label(parent, text="Pronto para processar...", 
@@ -495,7 +524,7 @@ class OCRHybridApp:
     def adicionar_arquivos(self):
         """Adicionar arquivos individuais à lista"""
         files = filedialog.askopenfilenames(
-            initialdir=self.pasta_padrao,
+            initialdir=self.pasta_entrada_selecionada,
             title="Selecione os arquivos PDF",
             filetypes=[("Arquivos PDF", "*.pdf"), ("Todos os arquivos", "*.*")]
         )
@@ -511,7 +540,7 @@ class OCRHybridApp:
     def adicionar_pasta(self):
         """Adicionar todos os PDFs de uma pasta"""
         folder_path = filedialog.askdirectory(
-            initialdir=self.pasta_padrao,
+            initialdir=self.pasta_entrada_selecionada,
             title="Selecione a pasta com PDFs"
         )
         
@@ -534,6 +563,76 @@ class OCRHybridApp:
         self.files_listbox.delete(0, tk.END)
         self.atualizar_status_lote()
         self.adicionar_log("Lista de arquivos limpa")
+
+    def selecionar_pasta_entrada(self):
+        """Selecionar pasta de entrada (onde buscar arquivos)"""
+        pasta_selecionada = filedialog.askdirectory(
+            initialdir=self.pasta_entrada_selecionada,
+            title="Selecione a pasta de entrada (origem dos arquivos)"
+        )
+        
+        if pasta_selecionada:
+            # Validar se a pasta existe e é acessível
+            if not os.path.exists(pasta_selecionada):
+                messagebox.showerror("Erro", "A pasta selecionada não existe ou não é acessível.")
+                return
+            
+            if not os.access(pasta_selecionada, os.R_OK):
+                messagebox.showerror("Erro", "Não há permissão de leitura na pasta selecionada.")
+                return
+            
+            self.pasta_entrada_selecionada = pasta_selecionada
+            # Truncar caminho se muito longo para exibição
+            caminho_display = pasta_selecionada
+            if len(caminho_display) > 50:
+                caminho_display = "..." + caminho_display[-47:]
+            
+            self.pasta_entrada_label.config(text=caminho_display)
+            
+            # Contar PDFs na pasta para dar feedback
+            pdf_count = len(list(Path(pasta_selecionada).glob("*.pdf")))
+            self.adicionar_log(f"📁 Pasta de entrada: {pasta_selecionada}")
+            self.adicionar_log(f"   📄 {pdf_count} arquivo(s) PDF encontrado(s)")
+
+    def selecionar_pasta_saida(self):
+        """Selecionar pasta de saída (onde salvar resultados)"""
+        pasta_selecionada = filedialog.askdirectory(
+            initialdir=self.pasta_saida_selecionada,
+            title="Selecione a pasta de saída (destino dos resultados)"
+        )
+        
+        if pasta_selecionada:
+            # Validar se a pasta existe e é acessível para escrita
+            if not os.path.exists(pasta_selecionada):
+                try:
+                    # Tentar criar a pasta se não existir
+                    os.makedirs(pasta_selecionada, exist_ok=True)
+                    self.adicionar_log(f"📁 Pasta criada: {pasta_selecionada}")
+                except Exception as e:
+                    messagebox.showerror("Erro", f"Não foi possível criar a pasta:\n{str(e)}")
+                    return
+            
+            if not os.access(pasta_selecionada, os.W_OK):
+                messagebox.showerror("Erro", "Não há permissão de escrita na pasta selecionada.")
+                return
+            
+            self.pasta_saida_selecionada = pasta_selecionada
+            # Truncar caminho se muito longo para exibição
+            caminho_display = pasta_selecionada
+            if len(caminho_display) > 50:
+                caminho_display = "..." + caminho_display[-47:]
+            
+            self.pasta_saida_label.config(text=caminho_display)
+            
+            # Verificar espaço disponível (se possível)
+            try:
+                import shutil
+                total, used, free = shutil.disk_usage(pasta_selecionada)
+                free_gb = free // (1024**3)
+                self.adicionar_log(f"💾 Pasta de saída: {pasta_selecionada}")
+                self.adicionar_log(f"   💽 Espaço livre: {free_gb} GB")
+            except:
+                self.adicionar_log(f"💾 Pasta de saída: {pasta_selecionada}")
 
     def atualizar_status_lote(self):
         """Atualizar status da lista de arquivos"""
@@ -567,6 +666,33 @@ class OCRHybridApp:
         """Parar o processamento em lote"""
         self.processamento_ativo = False
         self.adicionar_log_detalhado("PARADA SOLICITADA PELO USUÁRIO", nivel="WARNING")
+
+    def criar_tooltip(self, widget, texto):
+        """Criar tooltip para um widget"""
+        def mostrar_tooltip(event):
+            tooltip = tk.Toplevel(self.root)
+            tooltip.wm_overrideredirect(True)
+            tooltip.wm_geometry(f"+{event.x_root+10}+{event.y_root+10}")
+            
+            label = tk.Label(tooltip, text=texto, 
+                           font=("Arial", 8),
+                           background="lightyellow", 
+                           relief="solid", 
+                           borderwidth=1,
+                           padx=5, pady=3)
+            label.pack()
+            
+            # Esconder tooltip após 3 segundos
+            tooltip.after(3000, tooltip.destroy)
+            
+        def esconder_tooltip(event):
+            # Se houver tooltips, destruir
+            for child in self.root.winfo_children():
+                if isinstance(child, tk.Toplevel) and child.wm_overrideredirect():
+                    child.destroy()
+        
+        widget.bind("<Enter>", mostrar_tooltip)
+        widget.bind("<Leave>", esconder_tooltip)
 
     def exportar_log(self):
         """Exportar log detalhado para arquivo"""
@@ -1101,17 +1227,17 @@ class OCRHybridApp:
             if parte_numero:
                 nome_base = f"{nome_base}_subdiv_{parte_numero:02d}"
 
-            os.makedirs(self.pasta_destino, exist_ok=True)
+            os.makedirs(self.pasta_saida_selecionada, exist_ok=True)
 
             # Salvar JSON (sempre)
-            json_filename = os.path.join(self.pasta_destino, f"{nome_base}_OCR_hybrid.json")
+            json_filename = os.path.join(self.pasta_saida_selecionada, f"{nome_base}_OCR_hybrid.json")
             with open(json_filename, "w", encoding="utf-8") as f:
                 json.dump(ocr_result, f, indent=2, ensure_ascii=False)
 
             # Salvar Markdown (sempre)
             pages = ocr_result.get("pages", [])
             if pages:
-                md_filename = os.path.join(self.pasta_destino, f"{nome_base}_OCR.md")
+                md_filename = os.path.join(self.pasta_saida_selecionada, f"{nome_base}_OCR.md")
                 with open(md_filename, "w", encoding="utf-8") as f:
                     f.write(f"# Resultado OCR Híbrido - {nome_base}\n")
                     f.write(f"**Data:** {time.strftime('%d/%m/%Y %H:%M:%S')}\n")
@@ -1141,7 +1267,7 @@ class OCRHybridApp:
                 # Se não há páginas estruturadas, tentar obter texto direto
                 texto_direto = ocr_result.get("text", ocr_result.get("markdown", ""))
                 if texto_direto:
-                    md_filename = os.path.join(self.pasta_destino, f"{nome_base}_OCR.md")
+                    md_filename = os.path.join(self.pasta_saida_selecionada, f"{nome_base}_OCR.md")
                     with open(md_filename, "w", encoding="utf-8") as f:
                         f.write(f"# Resultado OCR Híbrido - {nome_base}\n")
                         f.write(f"**Data:** {time.strftime('%d/%m/%Y %H:%M:%S')}\n")
@@ -1250,10 +1376,10 @@ class OCRHybridApp:
                                 continue
             
             # Certificar que diretório existe
-            os.makedirs(self.pasta_destino, exist_ok=True)
+            os.makedirs(self.pasta_saida_selecionada, exist_ok=True)
             
             # Salvar PDF pesquisável
-            pdf_filename = os.path.join(self.pasta_destino, f"{nome_base}_pesquisavel.pdf")
+            pdf_filename = os.path.join(self.pasta_saida_selecionada, f"{nome_base}_pesquisavel.pdf")
             doc_novo.save(pdf_filename)
             
             # Verificar se arquivo foi realmente criado
