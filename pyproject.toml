@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "ocr-enhanced"
-version = "2.0.0"
+dynamic = ["version"]
 description = "Enhanced OCR application with local and cloud processing capabilities"
 readme = "README.md"
 license = {text = "MIT"}
@@ -86,6 +86,9 @@ include = ["src*"]
 
 [tool.setuptools.package-data]
 "src" = ["*.md", "*.txt", "*.json"]
+
+[tool.setuptools.dynamic]
+version = {attr = "src.__version__"}
 
 # Black configuration
 [tool.black]
