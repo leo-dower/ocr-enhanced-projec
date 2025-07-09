@@ -1,11 +1,31 @@
 """
-Graphical User Interface components.
+Modern GUI module for OCR Enhanced.
 
-This module contains all GUI-related classes including the main window,
-dialogs, widgets, and user interaction handlers.
+This module provides a modern PyQt6-based interface with:
+- Real-time automation dashboard
+- Visual workflow editor
+- Automation controls
+- Dark/light themes
+- Live metrics and monitoring
 """
 
 from .main_window import MainWindow
-from .widgets import FileListWidget, ProgressWidget
+from .dashboard import AutomationDashboard
+from .workflow_editor import WorkflowEditor
+from .automation_controls import AutomationControls
+from .themes import ThemeManager
 
-__all__ = ["MainWindow", "FileListWidget", "ProgressWidget"]
+# Legacy widgets for backward compatibility
+try:
+    from .widgets import FileListWidget, ProgressWidget
+    legacy_widgets = ["FileListWidget", "ProgressWidget"]
+except ImportError:
+    legacy_widgets = []
+
+__all__ = [
+    'MainWindow',
+    'AutomationDashboard', 
+    'WorkflowEditor',
+    'AutomationControls',
+    'ThemeManager'
+] + legacy_widgets
