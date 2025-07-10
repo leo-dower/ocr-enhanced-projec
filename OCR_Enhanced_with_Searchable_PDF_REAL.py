@@ -1655,8 +1655,8 @@ class OCRBatchAppComplete:
         self.search_button = tk.Button(log_button_frame, text="Busca Inteligente", 
                                       command=self.abrir_busca_inteligente,
                                       bg="lightcyan", font=("Arial", 8))
-        self.search_button.pack(side=tk.LEFT, padx=2)\n        \n        # Botão de backup automático\n        self.backup_button = tk.Button(log_button_frame, text=\"Backup Automático\", \n                                      command=self.abrir_backup_manager,\n                                      bg=\"lightyellow\", font=(\"Arial\", 8))\n        self.backup_button.pack(side=tk.LEFT, padx=2)
-
+        self.search_button.pack(side=tk.LEFT, padx=2)
+        
         # Log inicial
         self.adicionar_log("=== ENHANCED OCR REAL COM PDF PESQUISÁVEL ===")
         self.adicionar_log("🔧 Verificando capacidades do sistema...")
