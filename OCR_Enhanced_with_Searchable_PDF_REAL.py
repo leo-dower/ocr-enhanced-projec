@@ -101,7 +101,7 @@ class OCRBatchAppComplete:
         # Searchable PDF settings
         self.gerar_pdf_pesquisavel = True
         self.manter_original = True
-        self.qualidade_texto_pdf = 0.5
+        self.qualidade_texto_pdf = 0.1
 
         # Estatísticas
         self.stats_local = 0
@@ -126,13 +126,15 @@ class OCRBatchAppComplete:
         self.multi_engine_system = None
         self.available_engines = []
         self.engine_stats = {}
-        self.init_multi_engine_system()
 
         # Inicializar processamento paralelo
         self.init_parallel_processing()
         
         # Criar interface
         self.criar_interface()
+        
+        # Inicializar sistema multi-engine APÓS criar interface
+        self.init_multi_engine_system()
     
     def init_multi_engine_system(self):
         """Inicializar sistema multi-engine OCR com cache inteligente."""
@@ -173,6 +175,58 @@ class OCRBatchAppComplete:
         except Exception as e:
             self.adicionar_log(f"⚠️ Erro ao inicializar Multi-Engine: {e}")
             self.multi_engine_system = None
+    
+    def register_available_engines(self):
+        """Registrar engines OCR disponíveis"""
+        try:
+            if self.multi_engine_system:
+                self.available_engines = self.multi_engine_system.get_available_engines()
+                self.engine_stats = self.multi_engine_system.get_engine_statistics()
+            else:
+                self.available_engines = []
+                self.engine_stats = {}
+        except Exception as e:
+            self.adicionar_log(f"⚠️ Erro ao registrar engines: {e}")
+            self.available_engines = []
+            self.engine_stats = {}
+    
+    def init_parallel_processing(self):
+        """Inicializar sistema de processamento paralelo"""
+        try:
+            from src.utils.parallel_processor import ParallelProcessor
+            self.parallel_processor = ParallelProcessor(max_workers=4)
+            self.parallel_enabled = True
+        except ImportError:
+            self.parallel_processor = None
+            self.parallel_enabled = False
+    
+    def processar_com_multi_engine(self, caminho_arquivo):
+        """Processar arquivo usando sistema multi-engine"""
+        try:
+            if not self.multi_engine_system:
+                return None, "Sistema multi-engine não inicializado"
+            
+            from src.ocr.base import OCROptions
+            
+            # Configurar opções de OCR
+            options = OCROptions(
+                language="por",
+                preserve_layout=True,
+                enable_preprocessing=True,
+                quality_threshold=0.8
+            )
+            
+            # Processar usando multi-engine
+            resultado = self.multi_engine_system.process_file(caminho_arquivo, options)
+            
+            if resultado and resultado.success:
+                return resultado.text, None
+            else:
+                error_msg = resultado.error if resultado else "Resultado vazio"
+                return None, error_msg
+                
+        except Exception as e:
+            return None, f"Erro no processamento multi-engine: {str(e)}"
 
     def verificar_dependencias_pdf(self):
         """Verificar se dependências para PDF pesquisável estão disponíveis"""
@@ -328,9 +382,14 @@ class OCRBatchAppComplete:
                       command=self.atualizar_opcoes_pdf).grid(
             row=2, column=0, sticky="w", padx=5, pady=2)
 
+        self.gerar_xml_var = tk.BooleanVar(value=True)
+        tk.Checkbutton(output_frame, text="Gerar XML jurídico estruturado", 
+                      variable=self.gerar_xml_var, font=("Arial", 9)).grid(
+            row=3, column=0, sticky="w", padx=5, pady=2)
+
         # Configurações específicas do PDF
         pdf_config_frame = tk.LabelFrame(parent, text="Configurações do PDF", font=("Arial", 10, "bold"))
-        pdf_config_frame.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
+        pdf_config_frame.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
         pdf_config_frame.grid_columnconfigure(1, weight=1)
 
         self.manter_original_var = tk.BooleanVar(value=True)
@@ -625,6 +684,8 @@ class OCRBatchAppComplete:
                 return False
                 
         except Exception as e:
+            self.adicionar_log(f"❌ Erro ao criar PDF pesquisável: {str(e)}")
+            return None
             self.adicionar_log(f"⚠️ Erro geral ao adicionar texto invisível: {str(e)}")
             return False
 
@@ -1312,6 +1373,29 @@ class OCRBatchAppComplete:
                 else:
                     self.adicionar_log(f"❌ Dependências para PDF pesquisável não estão disponíveis")
                     self.adicionar_log(f"💡 Instale: pip install reportlab PyMuPDF")
+
+            # 4. Gerar XML estruturado (se selecionado) - NOVA FUNCIONALIDADE
+            if self.gerar_xml_var.get():
+                try:
+                    from src.utils.xml_output_generator import gerar_xml_juridico
+                    
+                    self.adicionar_log(f"⚡ Iniciando criação de XML estruturado...")
+                    xml_filename = os.path.join(self.pasta_destino, f"{nome_base}_OCR_juridico.xml")
+                    
+                    # Detectar tipo de documento automaticamente
+                    xml_content = gerar_xml_juridico(resultado, tipo_documento='auto', metadata=metadata)
+                    
+                    with open(xml_filename, "w", encoding="utf-8") as f:
+                        f.write(xml_content)
+                    
+                    arquivos_gerados.append(("XML Jurídico", xml_filename))
+                    metadata["output_formats"].append("XML Jurídico")
+                    self.adicionar_log(f"✅ XML jurídico criado com detecção automática de tipo")
+                    
+                except ImportError:
+                    self.adicionar_log(f"❌ Gerador XML não disponível")
+                except Exception as e:
+                    self.adicionar_log(f"⚠️ Erro ao gerar XML: {str(e)}")
 
             # Log dos arquivos gerados
             self.adicionar_log(f"💾 Arquivos gerados para {nome_base}:")
