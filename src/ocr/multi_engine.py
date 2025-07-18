@@ -449,6 +449,15 @@ class MultiEngineOCR:
             error_message=combined_error
         )
     
+    def get_available_engines(self) -> List[str]:
+        """Get list of available engine names."""
+        available_engines = []
+        for engine_name in self.engine_manager.get_available_engines():
+            engine = self.engine_manager.get_engine(engine_name)
+            if engine and engine.is_available():
+                available_engines.append(engine_name)
+        return available_engines
+    
     def get_engine_statistics(self) -> Dict[str, Any]:
         """Get comprehensive engine statistics."""
         stats = {
