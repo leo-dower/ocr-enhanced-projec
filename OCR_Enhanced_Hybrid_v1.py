@@ -32,6 +32,13 @@ import platform
 import subprocess
 import sys
 
+# Importar gerenciador de chaves API
+try:
+    from api_key_manager import get_api_key, set_api_key, list_keys
+    HAS_API_MANAGER = True
+except ImportError:
+    HAS_API_MANAGER = False
+
 # Dependências adicionais para processamento local
 try:
     import pytesseract
@@ -148,10 +155,15 @@ class OCRHybridApp:
         self.adicionar_log(f"Tesseract disponível: {'✓' if self.tesseract_disponivel else '✗'}")
         self.adicionar_log(f"pdf2image disponível: {'✓' if self.pdf2image_disponivel else '✗'}")
         self.adicionar_log(f"PyMuPDF disponível: {'✓' if self.pymupdf_disponivel else '✗'}")
+        self.adicionar_log(f"API Key Manager: {'✓' if HAS_API_MANAGER else '✗'}")
         
         if not (self.tesseract_disponivel and self.pdf2image_disponivel):
             self.adicionar_log("⚠ Algumas dependências locais não estão instaladas")
             self.adicionar_log("💡 Execute: pip install pytesseract pdf2image pillow")
+            
+        if not HAS_API_MANAGER:
+            self.adicionar_log("⚠ API Key Manager não disponível")
+            self.adicionar_log("💡 Certifique-se que api_key_manager.py está no mesmo diretório")
 
     def criar_controles_principais(self, parent):
         """Criar controles principais (esquerda)"""
@@ -160,11 +172,29 @@ class OCRHybridApp:
                          font=("Arial", 14, "bold"), fg="darkblue")
         titulo.grid(row=0, column=0, columnspan=3, pady=10)
 
-        # API Key
-        tk.Label(parent, text="Mistral API Key:", font=("Arial", 10)).grid(
-            row=1, column=0, sticky="e", padx=10, pady=8)
-        self.api_key_entry = tk.Entry(parent, width=40, show="*", font=("Arial", 10))
-        self.api_key_entry.grid(row=1, column=1, columnspan=2, padx=10, pady=8, sticky="ew")
+        # API Key - com gerenciamento automático
+        api_frame = tk.Frame(parent)
+        api_frame.grid(row=1, column=0, columnspan=3, sticky="ew", padx=10, pady=8)
+        api_frame.grid_columnconfigure(1, weight=1)
+        
+        tk.Label(api_frame, text="Mistral API Key:", font=("Arial", 10)).grid(
+            row=0, column=0, sticky="e", padx=(0, 10))
+        self.api_key_entry = tk.Entry(api_frame, width=40, show="*", font=("Arial", 10))
+        self.api_key_entry.grid(row=0, column=1, sticky="ew", padx=(0, 10))
+        
+        # Botão para carregar chave automaticamente
+        self.load_key_button = tk.Button(api_frame, text="Carregar", 
+                                        command=self.carregar_api_key_automatico,
+                                        bg="lightblue", font=("Arial", 8))
+        self.load_key_button.grid(row=0, column=2, padx=5)
+        self.criar_tooltip(self.load_key_button, "Carregar chave de variável de ambiente ou arquivo de configuração")
+        
+        # Status da chave
+        self.api_key_status = tk.Label(api_frame, text="", font=("Arial", 8), fg="gray")
+        self.api_key_status.grid(row=1, column=0, columnspan=3, pady=(5, 0))
+        
+        # Carregar chave automaticamente na inicialização
+        self.verificar_api_key_inicial()
 
         # Configurações básicas
         config_frame = tk.LabelFrame(parent, text="Configurações Básicas", font=("Arial", 10, "bold"))
@@ -234,7 +264,7 @@ class OCRHybridApp:
 
         # Seleção de arquivos
         arquivo_frame = tk.LabelFrame(parent, text="Seleção de Arquivos", font=("Arial", 10, "bold"))
-        arquivo_frame.grid(row=3, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
+        arquivo_frame.grid(row=4, column=0, columnspan=3, sticky="ew", padx=10, pady=5)
         arquivo_frame.grid_columnconfigure(0, weight=1)
 
         # Botões de seleção
@@ -280,7 +310,7 @@ class OCRHybridApp:
         self.progress_var = tk.DoubleVar()
         self.progress_bar = ttk.Progressbar(parent, variable=self.progress_var, 
                                            maximum=100, length=300)
-        self.progress_bar.grid(row=4, column=0, columnspan=3, pady=10, sticky="ew", padx=10)
+        self.progress_bar.grid(row=5, column=0, columnspan=3, pady=10, sticky="ew", padx=10)
 
         # Botão processar
         self.processar_button = tk.Button(parent, text="PROCESSAR HÍBRIDO", 
@@ -288,7 +318,7 @@ class OCRHybridApp:
                                          bg="green", fg="white", 
                                          font=("Arial", 12, "bold"),
                                          height=2)
-        self.processar_button.grid(row=5, column=0, columnspan=3, pady=15, padx=10)
+        self.processar_button.grid(row=6, column=0, columnspan=3, pady=15, padx=10)
 
         # Status
         self.status_label = tk.Label(parent, text="Pronto para processar...", 
@@ -717,6 +747,58 @@ class OCRHybridApp:
                 messagebox.showinfo("Exportação", f"Log exportado com sucesso para:\n{filename}")
         except Exception as e:
             self.adicionar_log_detalhado(f"Erro ao exportar log: {str(e)}", nivel="ERROR")
+    
+    def verificar_api_key_inicial(self):
+        """Verificar e carregar chave API na inicialização"""
+        if not HAS_API_MANAGER:
+            self.api_key_status.config(text="⚠ API Key Manager não disponível", fg="orange")
+            return
+            
+        try:
+            # Tentar carregar chave automaticamente
+            key = get_api_key('mistral')
+            if key:
+                self.api_key_entry.insert(0, key)
+                self.api_key_status.config(text="✅ Chave carregada automaticamente", fg="green")
+                self.adicionar_log("🔑 Chave API carregada automaticamente")
+            else:
+                self.api_key_status.config(text="⚠ Chave não encontrada - use botão 'Carregar' ou insira manualmente", fg="orange")
+                
+        except Exception as e:
+            self.api_key_status.config(text=f"❌ Erro ao carregar chave: {str(e)}", fg="red")
+    
+    def carregar_api_key_automatico(self):
+        """Carregar chave API usando sistema de gerenciamento"""
+        if not HAS_API_MANAGER:
+            messagebox.showerror("Erro", "API Key Manager não disponível.\nInsira a chave manualmente.")
+            return
+            
+        try:
+            # Limpar entrada atual
+            self.api_key_entry.delete(0, tk.END)
+            
+            # Tentar carregar chave
+            key = get_api_key('mistral')
+            if key:
+                self.api_key_entry.insert(0, key)
+                self.api_key_status.config(text="✅ Chave carregada com sucesso", fg="green")
+                self.adicionar_log("🔑 Chave API carregada com sucesso")
+                
+                # Salvar na sessão para próximos usos
+                set_api_key('mistral', key, permanent=False)
+                
+            else:
+                self.api_key_status.config(text="❌ Nenhuma chave encontrada", fg="red")
+                messagebox.showwarning("Aviso", 
+                    "Nenhuma chave API encontrada.\n\n"
+                    "Você pode:\n"
+                    "1. Definir variável de ambiente: MISTRAL_API_KEY\n"
+                    "2. Salvar em arquivo de configuração\n"
+                    "3. Inserir manualmente no campo acima")
+                
+        except Exception as e:
+            self.api_key_status.config(text=f"❌ Erro: {str(e)}", fg="red")
+            self.adicionar_log(f"❌ Erro ao carregar chave: {str(e)}", nivel="ERROR")
 
     def atualizar_progresso(self, atual, total):
         """Atualizar barra de progresso"""
